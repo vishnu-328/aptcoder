@@ -23,9 +23,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     // Initialize GoogleSignIn with proper scopes
-    _googleSignIn = GoogleSignIn(
-      scopes: ['email', 'profile'],
-    );
+    _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
     _initialize();
   }
 
@@ -54,7 +52,6 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Initialization failed: ${e.toString()}';
-      print('AuthProvider initialization error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -66,7 +63,6 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    print('AuthProvider: Starting Google Sign In...');
 
     try {
       if (kIsWeb) {
@@ -74,39 +70,35 @@ class AuthProvider extends ChangeNotifier {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
         provider.addScope('profile');
-        
-        final UserCredential userCredential = await _auth.signInWithPopup(provider);
-        
+
+        final UserCredential userCredential = await _auth.signInWithPopup(
+          provider,
+        );
+
         if (userCredential.user == null) {
           _errorMessage = 'Sign in failed: No user data';
           return false;
         }
-        
+
         await _createOrUpdateUser(userCredential.user!);
         await _loadUserData(userCredential.user!.uid);
         return true;
       }
 
-      // Native (Android / iOS)
-      print('AuthProvider: Native platform. Calling signIn()...');
-      
       // Sign out first to ensure clean state
       await _googleSignIn.signOut();
-      
+
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        print('AuthProvider: User cancelled sign in.');
         _errorMessage = 'Sign in cancelled';
         return false;
       }
 
-      print('AuthProvider: Google User obtained: ${googleUser.email}');
-      
       // Obtain auth details
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      print('AuthProvider: Auth tokens obtained.');
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       if (googleAuth.accessToken == null || googleAuth.idToken == null) {
         _errorMessage = 'Failed to obtain authentication tokens';
@@ -119,23 +111,20 @@ class AuthProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      print('AuthProvider: Signing in to Firebase...');
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
 
       if (userCredential.user == null) {
         _errorMessage = 'Firebase sign in failed: No user data';
         return false;
       }
 
-      print('AuthProvider: Firebase Sign In Successful: ${userCredential.user!.uid}');
-      
       await _createOrUpdateUser(userCredential.user!);
       await _loadUserData(userCredential.user!.uid);
 
       return true;
     } catch (e) {
-      print('AuthProvider: Error during sign in: $e');
-      
       // Handle specific error types
       if (e.toString().contains('network_error')) {
         _errorMessage = 'Network error. Please check your connection.';
@@ -148,7 +137,7 @@ class AuthProvider extends ChangeNotifier {
       } else {
         _errorMessage = 'Sign in failed: ${e.toString()}';
       }
-      
+
       return false;
     } finally {
       _isLoading = false;
@@ -200,19 +189,20 @@ class AuthProvider extends ChangeNotifier {
         );
 
         await userRef.set(newUser.toMap());
-        print('AuthProvider: New user created in Firestore');
       } else {
         // Update existing user
         await userRef.update({
           'lastLogin': DateTime.now().toIso8601String(),
           'email': firebaseUser.email ?? userDoc.data()?['email'] ?? '',
-          'displayName': firebaseUser.displayName ?? userDoc.data()?['displayName'] ?? 'Student',
-          'photoUrl': firebaseUser.photoURL ?? userDoc.data()?['photoUrl'] ?? '',
+          'displayName':
+              firebaseUser.displayName ??
+              userDoc.data()?['displayName'] ??
+              'Student',
+          'photoUrl':
+              firebaseUser.photoURL ?? userDoc.data()?['photoUrl'] ?? '',
         });
-        print('AuthProvider: User updated in Firestore');
       }
     } catch (e) {
-      print('AuthProvider: Error creating/updating user: $e');
       _errorMessage = 'Failed to save user data: ${e.toString()}';
       rethrow; // Re-throw to handle in calling function
     }
@@ -224,13 +214,10 @@ class AuthProvider extends ChangeNotifier {
       final userDoc = await _firestore.collection('users').doc(uid).get();
       if (userDoc.exists) {
         _currentUser = UserModel.fromMap(userDoc.data()!);
-        print('AuthProvider: User data loaded successfully');
       } else {
         _currentUser = null;
-        print('AuthProvider: User document not found');
       }
     } catch (e) {
-      print('AuthProvider: Error loading user data: $e');
       _errorMessage = 'Failed to load user data: ${e.toString()}';
     }
     notifyListeners();
@@ -257,9 +244,7 @@ class AuthProvider extends ChangeNotifier {
 
       _currentUser = null;
       _errorMessage = null;
-      print('AuthProvider: Sign out successful');
     } catch (e) {
-      print('AuthProvider: Sign out error: $e');
       _errorMessage = 'Failed to sign out: ${e.toString()}';
     } finally {
       _isLoading = false;
@@ -274,9 +259,7 @@ class AuthProvider extends ChangeNotifier {
       if (_currentUser?.uid == uid) {
         await _loadUserData(uid);
       }
-      print('AuthProvider: User role updated to $role');
     } catch (e) {
-      print('AuthProvider: Error updating user role: $e');
       _errorMessage = 'Failed to update user role: ${e.toString()}';
       notifyListeners();
     }
