@@ -20,15 +20,12 @@ class CourseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('Fetching courses...');
       QuerySnapshot snapshot = await _firestore.collection('courses').get();
 
       if (snapshot.docs.isEmpty) {
-        print('No courses found. Auto-seeding...');
         // Auto-seed if empty
         await SeedData.seedCourses();
         snapshot = await _firestore.collection('courses').get();
-        print('Seeding complete. Found ${snapshot.docs.length} courses.');
       } else {
         print('Found ${snapshot.docs.length} courses.');
       }

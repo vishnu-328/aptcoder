@@ -204,7 +204,6 @@ class _HomeScreen extends StatelessWidget {
                 itemCount: courseProvider.courses.length,
                 itemBuilder: (context, index) {
                   final course = courseProvider.courses[index];
-                  print(course.thumbnailUrl);
                   return CourseCard(course: course)
                       .animate(delay: (100 * index).ms)
                       .fade()

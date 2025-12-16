@@ -10,17 +10,13 @@ class SeedData {
     final snapshot = await coursesCollection.get();
     if (snapshot.docs.isNotEmpty) {
       if (!force) {
-        print('Database already seeded.');
         return;
       }
       // If force is true, delete existing courses
-      print('Force seeding: Deleting existing courses...');
       for (var doc in snapshot.docs) {
         await doc.reference.delete();
       }
     }
-
-    print('Seeding database with sample courses...');
 
     final List<CourseModel> sampleCourses = [
       CourseModel(
